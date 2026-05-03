@@ -133,8 +133,7 @@ def get_github_repos():
         url = f"https://api.github.com/user/repos?per_page={PER_PAGE}&page={page}&&affiliation=owner,member"
         response = gh_session.get(url=url)
         if response.status_code != 200:
-            logger.error("GitHub API error %s: %s",
-                         response.status_code, response.text)
+            logger.error("GitHub API error %s: %s", response.status_code, response.text)
             break
 
         # Get data in json format
@@ -253,7 +252,7 @@ def mirror_repos_from_github(repo_name, github_url, local_path) -> None:
             # Attemp a reclone if corrupted
             try:
                 logger.info("Recloning %s due to fetch failure", repo_name)
-                shutil.rmtree(local_path)
+                shutil.rmtree(local_path) # delete the corrupted repo
                 run(["git", "clone", "--mirror", auth_clone_url, local_path])
             except Exception as e2:
                 logger.exception("Reclone failed for %s: %s", repo_name, e2)

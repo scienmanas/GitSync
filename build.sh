@@ -3,7 +3,7 @@
 
 set -e
 
-echo "\n==== GitSync Setup ===="
+echo "==== GitSync Setup ===="
 
 # Prompt for .env variables (with defaults)
 read -p "GITHUB_USER [your-github-username]: " GITHUB_USER
@@ -51,24 +51,25 @@ EOF
 
 echo ".env file created."
 
-# Create venv
+# Ensure uv is installed
+if ! command -v uv >/dev/null 2>&1; then
+    echo "Error: 'uv' is not installed."
+    echo "Install it from https://docs.astral.sh/uv/getting-started/installation/ and re-run this script."
+    exit 1
+fi
+
+# Recreate the project venv from scratch
 if [ -d ".venv" ]; then
     echo "Removing existing Python virtual environment..."
     rm -rf .venv
 fi
-echo "Creating Python virtual environment..."
-python3 -m venv .venv
 
-source .venv/bin/activate
+echo "Syncing dependencies with uv..."
+uv sync
 
-# Install dependencies
-if [ -f requirements.txt ]; then
-    echo "Installing dependencies from requirements.txt..."
-    pip install --upgrade pip
-    pip install -r requirements.txt
-else
-    echo "requirements.txt not found!"
-fi
+# Refresh requirements.txt for any downstream consumer that still reads it.
+echo "Exporting requirements.txt from uv.lock..."
+uv export --no-hashes --no-dev --output-file requirements.txt
 
-deactivate
-echo \nSetup complete! Activate your venv with 'source venv/bin/activate' and run 'python main.py' to start GitSync.
+echo
+echo "Setup complete! Run 'uv run python main.py' to start GitSync, or activate the venv with 'source .venv/bin/activate'."
