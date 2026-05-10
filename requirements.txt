@@ -18,5 +18,5 @@ requests==2.33.1
     # via gitsync
 rich==15.0.0
     # via gitsync
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
