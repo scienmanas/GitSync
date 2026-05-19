@@ -4,7 +4,7 @@ certifi==2026.4.22
     # via requests
 charset-normalizer==3.4.7
     # via requests
-idna==3.13
+idna==3.15
     # via requests
 markdown-it-py==4.0.0
     # via rich
@@ -18,5 +18,5 @@ requests==2.33.1
     # via gitsync
 rich==15.0.0
     # via gitsync
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
