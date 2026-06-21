@@ -6,3 +6,4 @@ repos-backup
 Logs
 shell_logs.txt
 .DS_Store
+__pycache__

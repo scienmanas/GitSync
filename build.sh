@@ -67,9 +67,5 @@ fi
 echo "Syncing dependencies with uv..."
 uv sync
 
-# Refresh requirements.txt for any downstream consumer that still reads it.
-echo "Exporting requirements.txt from uv.lock..."
-uv export --no-hashes --no-dev --output-file requirements.txt
-
 echo
 echo "Setup complete! Run 'uv run python main.py' to start GitSync, or activate the venv with 'source .venv/bin/activate'."
