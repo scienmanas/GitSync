@@ -12,20 +12,51 @@ jobs:
     # "Does this still work?" gate. Runs on every PR (including Dependabot's),
     # so a dependency bump that removes/renames a symbol main.py imports goes red.
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Every Python pyproject.toml promises (requires-python >= 3.14) that
+        # is out - today just 3.14, what the image ships too. When 3.15 lands,
+        # add it here so the promise is tested rather than assumed.
+        python-version: ["3.14"]
+    name: verify (Python ${{ matrix.python-version }})
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Install uv
+        # The uv version comes from [tool.uv] required-version in pyproject.toml
         uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Sync dependencies (frozen)
         run: uv sync --frozen
 
       - name: Byte-compile
-        run: uv run python -m compileall -q main.py
+        run: uv run python -m compileall -q main.py gitsync
 
       - name: Import smoke test
         # Importing exercises every top-level dependency against the locked
         # versions; a broken/renamed API surfaces here without needing tokens.
+        # main.py pulls in gitsync.cli, which pulls in the rest of the package.
         run: uv run python -c "import main"
+
+      - name: CLI smoke test
+        # Every command parses its arguments and prints help without tokens.
+        run: |
+          uv run python main.py --help
+          uv run python main.py sync --help
+          uv run python main.py archive --help
+          uv run python main.py schedule --help
+
+      - name: Run tests
+        # No tokens needed: the API is stubbed and the git-backed tests build
+        # throwaway repos in a tmp folder. -v names every test in the log, so a
+        # test that stops being collected is visible instead of a missing dot.
+        run: uv run pytest -v
+
+# The image is deliberately not built here. Building it on every push and PR
+# costs minutes to prove something that rarely changes, and the test suite
+# already reads the Dockerfile and the entrypoint. Building and publishing is a
+# decision, so it lives in publish-image.yml, which only you can start.

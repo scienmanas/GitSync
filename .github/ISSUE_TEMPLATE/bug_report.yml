@@ -1,0 +1,86 @@
+name: Bug report
+description: Something went wrong - a run failed, a repo was skipped, the container won't start...
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this!
+
+        **Never paste a token.** GitSync masks tokens in its own logs, but check anything you paste. Found a security problem (e.g. a token showing up somewhere)? Please don't open an issue - see [SECURITY.md](https://github.com/scienmanas/GitSync/blob/main/SECURITY.md).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      description: The exact command, or your Docker setup (`docker run ...` / compose file), and the settings involved - with tokens left out.
+      placeholder: |
+        uv run python main.py archive --mode code
+        INCLUDE_FORKS=false, CPU_LOAD_PERCENT=70
+    validations:
+      required: true
+
+  - type: dropdown
+    id: how-run
+    attributes:
+      label: How do you run GitSync?
+      options:
+        - Locally (uv run python main.py ...)
+        - Docker, one-off run
+        - Docker, scheduled (CRON_SCHEDULE)
+        - Cron job set up by deploy.sh
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: command
+    attributes:
+      label: Which command?
+      options:
+        - sync
+        - archive
+        - schedule
+        - Not sure / startup
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: GitSync version
+      description: From pyproject.toml, or the Docker image tag (`docker inspect` shows it too).
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: OS, Python and uv versions
+      placeholder: "macOS 15, Python 3.14.8, uv 0.12.22"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: The relevant lines from `Logs/logs_*.txt` or `docker logs`. Tokens are masked, but please double-check.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the logs and the README's Troubleshooting section.
+          required: true
+        - label: I removed every token and secret from what I pasted.
+          required: true

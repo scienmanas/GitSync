@@ -3,7 +3,12 @@ venv
 .env
 .qodo
 repos-backup
+archives
 Logs
 shell_logs.txt
 .DS_Store
 __pycache__
+.pytest_cache
+# coverage.py data from a local `coverage run`
+.coverage
+.coverage.*

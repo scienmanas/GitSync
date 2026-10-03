@@ -1,17 +1,61 @@
 [project]
 name = "gitsync"
-version = "0.1.0"
-description = "Mirror GitHub repositories to GitLab, preserving full commit history."
+version = "2.0.0"
+description = "Back up your GitHub repositories: mirror them to GitLab with full history, or zip them up - by hand or on a schedule."
 readme = "README.md"
-license = { text = "MIT" }
-requires-python = ">=3.12"
+# SPDX license expression + the file it refers to (PEP 639)
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Manas", email = "iamscientistmanas@gmail.com" },
+]
+keywords = ["github", "gitlab", "backup", "mirror", "git", "archive", "docker", "cron"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: System :: Archiving :: Backup",
+    "Topic :: System :: Archiving :: Mirroring",
+]
+requires-python = ">=3.14"
 dependencies = [
     "python-dotenv",
     "requests",
     "rich",
 ]
 
+[project.urls]
+Homepage = "https://github.com/scienmanas/GitSync"
+Documentation = "https://github.com/scienmanas/GitSync#readme"
+Source = "https://github.com/scienmanas/GitSync"
+Issues = "https://github.com/scienmanas/GitSync/issues"
+Releases = "https://github.com/scienmanas/GitSync/releases"
+"Container image" = "https://github.com/scienmanas/GitSync/pkgs/container/gitsync"
+
 [dependency-groups]
 dev = [
     "pip-audit",
+    "pytest>=9.1.1",
 ]
+
+[tool.uv]
+# uv.lock is written by this uv (the same version the Dockerfile copies in);
+# an older uv may not read it, so say so up front instead of failing oddly.
+# setup-uv in CI reads this too.
+required-version = ">=0.12.22"
+
+[tool.pytest.ini_options]
+# Only look in tests/ - otherwise pytest walks .venv/, repos-backup/ and archives/
+testpaths = ["tests"]
+# -ra: list everything that was not a plain pass (failed, error, skipped) in the
+# summary at the end, so nothing quietly disappears from a run.
+# -v: print each test's name and result instead of just dots.
+# --log-cli-level=INFO: stream logging output live for every test, not just failures.
+addopts = "-ra -v --log-cli-level=INFO"
