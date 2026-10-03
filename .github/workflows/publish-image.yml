@@ -81,7 +81,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build for this runner and smoke-test it
         # Single arch and loaded into the local daemon, so the image can be run
