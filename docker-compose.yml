@@ -1,0 +1,37 @@
+# Scheduled GitSync in one command:
+#
+#   cp .env.example .env   # fill in your tokens
+#   docker compose up -d   # syncs now, then on CRON_SCHEDULE
+#   docker compose logs -f
+#
+# One-offs, without disturbing the scheduled container (if a scheduled run is
+# going right then, the one-off waits for nothing - it is skipped, exit 75):
+#
+#   docker compose run --rm gitsync sync
+#   docker compose run --rm gitsync archive --mode code
+
+services:
+  gitsync:
+    # Builds from this checkout. To run a published image instead, drop the
+    # build line and point image at ghcr.io/scienmanas/gitsync:latest
+    build: .
+    image: gitsync:latest
+    container_name: gitsync
+    # Tokens and settings come from .env - nothing sensitive is in this file
+    env_file: .env
+    environment:
+      # Every night at 02:00. https://crontab.guru if that looks like line noise.
+      CRON_SCHEDULE: "${CRON_SCHEDULE:-0 2 * * *}"
+      # A restart should not mean waiting until tomorrow for a backup
+      RUN_ON_START: "${RUN_ON_START:-true}"
+      # The schedule is read in this timezone; without it you are on UTC
+      TZ: "${TZ:-UTC}"
+    volumes:
+      # The mirrors, the archives and the logs. Losing this means a full
+      # re-clone of every repository, so it is a named volume, not a tmpfs.
+      - gitsync-data:/data
+    # Survives a daemon restart or a reboot, but stays down once you stop it
+    restart: unless-stopped
+
+volumes:
+  gitsync-data:
