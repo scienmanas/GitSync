@@ -78,7 +78,7 @@ jobs:
 
       - name: Set up QEMU
         # arm64 is emulated here; the runner itself is amd64
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
