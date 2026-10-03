@@ -4,6 +4,10 @@ All notable changes to GitSync are listed here. The format follows [Keep a Chang
 
 ## [Unreleased][Unreleased]
 
+### Added - 3.0.1
+
+- **`docker-setup.sh`** — `build.sh` for Docker: lets you pick the image version from the ones published (newest first, with release dates, `latest` by default) or type any tag, offers your existing `.env` values as the defaults (Enter keeps each), asks for your tokens (masked), what to run and how often — all choices as arrow-key menus — then starts GitSync in the background on a schedule (`docker run -d`) or once in the foreground. Backups go to a visible `./gitsync-data` folder by default, the schedule is checked before anything starts and read in your machine's timezone, and it ends with how to follow the logs, read earlier runs and find the zips. Settings are saved to `.env` for next time, or — if you'd rather not keep a file — passed straight to Docker as `-e NAME` without the value, so tokens never appear on a command line.
+
 ### Planned for 3.0.0
 
 - **Username check.** Before anything runs, ask GitHub and GitLab who each token belongs to and stop with a clear message if `GITHUB_USER` / `GITLAB_USER` doesn't match — a typo currently makes every repo fail. `build.sh` will check right after the token is pasted and fill the username in itself.
