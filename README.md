@@ -149,6 +149,23 @@ The list of folders stripped in `code` mode is configurable: set `CODE_ARCHIVE_E
 
 Prefer not to install anything? The whole thing runs from a container, configured entirely through environment variables — Alpine-based, ~120 MB, no root.
 
+**Easiest: let the setup script do it.** Like `build.sh`, but for Docker — it asks for your tokens (masked as you paste, with links that tick the right boxes), what to run and how often, then starts the container:
+
+```sh
+bash docker-setup.sh
+```
+
+- **Pick the version** from a list of everything published (newest first, with each release's date) — `latest` by default — or type any tag, or build from this folder. Choices are arrow-key menus: ↑/↓ and Enter.
+- **On a schedule in the background** (`docker run -d`, restarts after a reboot) or **just once, now**.
+- **Your `.env` values are the defaults.** If a `.env` exists, every question shows what's in it — press Enter to keep it, or type something new (tokens are shown masked; `-` stops using GitLab). Or start fresh instead.
+- Your schedule is checked before anything starts, and read in your machine's timezone.
+- Backups go to a **`./gitsync-data` folder** you can open (zips in `archives/`, one log file per run in `logs/`) — or a Docker volume if you prefer.
+- It ends with the commands you'll want: following the logs live, checking how the last run went, finding the zips, stopping and updating.
+- Run it again any time to change settings or pick up a newer image; it replaces the container and keeps your backups.
+- **Your choice where the settings are kept.** By default they're saved to `.env` (readable only by you), so running the script again keeps your tokens. Answer **N** to *Save to .env?* and nothing is written: each setting is handed to Docker as `-e NAME` with no value, so the tokens never appear on a command line — you just paste them again next time. Either way Docker itself keeps the settings in the container (`docker inspect gitsync` shows them) — it needs them to restart the container after a reboot — so anyone who can run `docker` on that machine can read them.
+
+Or do it by hand:
+
 ```sh
 docker build -t gitsync .
 
@@ -358,6 +375,7 @@ tests/                  # pytest suite, one file per module
 Dockerfile              # Alpine image, unprivileged, git + the venv
 docker-entrypoint.sh    # picks a mode from the environment and starts it
 docker-compose.yml      # scheduled container with a volume, ready to `up -d`
+docker-setup.sh         # asks a few questions, writes .env and starts the container
 ```
 
 Nothing runs at import time beyond reading the environment, so you can poke at any module in a REPL without kicking off a backup.

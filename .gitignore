@@ -12,3 +12,6 @@ __pycache__
 # coverage.py data from a local `coverage run`
 .coverage
 .coverage.*
+
+# docker-setup.sh's data folder: mirrors, archives and logs
+gitsync-data/
