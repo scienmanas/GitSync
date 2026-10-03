@@ -86,7 +86,7 @@ jobs:
       - name: Build for this runner and smoke-test it
         # Single arch and loaded into the local daemon, so the image can be run
         # before anything is published. The layers are cached for the real build.
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
@@ -113,7 +113,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build every architecture and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: ${{ inputs.platforms }}
