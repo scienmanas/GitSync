@@ -1,0 +1,22 @@
+# Keep the build context small and, more to the point, keep secrets and local
+# state out of the image.
+.env
+.git
+.github
+.venv
+venv
+Logs
+repos-backup
+archives
+shell_logs.txt
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+.DS_Store
+.qodo
+tests
+build.sh
+deploy.sh
+docker-compose.yml
+README.md

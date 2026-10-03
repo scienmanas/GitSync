@@ -8,6 +8,18 @@ updates:
     labels:
       - "dependencies"
 
+  # The Dockerfile's base image (python:3.14-alpine) and the uv image it copies
+  # from (ghcr.io/astral-sh/uv:<version>) - so the pinned uv does not quietly
+  # fall a year behind again. A uv bump here should come with a matching bump of
+  # required-version in pyproject.toml.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
