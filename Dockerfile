@@ -1,7 +1,7 @@
 # GitSync, on Alpine. Two stages so uv and the build metadata never reach the
 # runtime image - what ships is python + git + the virtualenv + this project.
 
-FROM python:3.14-alpine AS builder
+FROM python:3.15-alpine AS builder
 
 # uv resolves from uv.lock, so the container gets byte-for-byte the versions CI
 # tested. Pinned rather than :latest - a build should not change on its own.
@@ -18,7 +18,7 @@ RUN uv sync --frozen --no-dev
 
 
 # Must be the same Python as the builder: the venv copied below is tied to it
-FROM python:3.14-alpine
+FROM python:3.15-alpine
 
 # Set by the publish workflow from the tag it was asked for; "dev" for a plain
 # local `docker build`. Baked in so a running container can say what it is.
